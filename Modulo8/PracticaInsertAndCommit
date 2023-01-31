@@ -1,67 +1,76 @@
 --Para crear la tabla que nos va a ayudar a desarrollar el ejercicio--
 
-create TABLE bricks(
-	coulour varchar2 (10),
-    shape varchar2 (10),
-  	weight integer
+create table toys (
+  toy_id   integer,
+  toy_name varchar2(100),
+  colour   varchar2(10)
 );
 
-INSERT INTO bricks VALUES ('red', 'cube', 1);
-INSERT INTO bricks VALUES ('red', 'pyramid', 2);
-INSERT INTO bricks VALUES ('red', 'cuboid', 1);
+create table bricks (
+  brick_id integer,
+  colour   varchar2(10),
+  shape    varchar2(10)
+);
 
-INSERT INTO bricks VALUES ('blue', 'cube', 1);
-INSERT INTO bricks VALUES ('blue', 'pyramid', 2);
+--Para insertar una columna simple: --
+insert into toys values ( 1, 'Miss Snuggles', 'pink' );
 
-INSERT INTO bricks VALUES ('green', 'cube', 3);
+select * from toys;
 
---Para mirar la tabla: --
+--Para no colocar todos los valores de las columnas --
+insert into toys ( toy_id, toy_name ) values ( 2, 'Baby Turtle' );
 
-SELECT * FROM bricks
+select * from toys;
 
---Mostramos el numero de filas que hay--
+--En el siguiente ejemplo se ingresan los ID de toys a la tabla bricks: --
+select * from toys;
 
-SELECT COUNT (*) FROM bricks:
+insert into bricks ( brick_id )
+  select toy_id
+  from   toys;
 
---Para seguir los query: --
+select * from bricks;
 
-SELECT sum(weight), min(weight), max(weight),
-	Avg(weight), median(weight),
-    variance(weight)
-FROM bricks;
+-- For example, the following compares the performance of single-row vs multi-row inserts. Both add 50,000 rows.--
+-- Single-row adds one row 50,000 times. Multi-row adds 50,000 rows in one go. The multi-row version will be 10x --
+--to 100x faster! --
 
---Para saber el numero de colores que hay en la tabla --
+declare
+  start_time   pls_integer;
+  insert_count pls_integer := 50000;
+begin
+  start_time := dbms_utility.get_time ();
+  
+  for i in 1 .. insert_count loop
+    insert into bricks 
+    values ( i, 'red', 'cube' );
+  end loop;
+  
+  dbms_output.put_line ( 'Single-row duration = ' || ( dbms_utility.get_time () - start_time) );
+  
+  rollback;
+  
+  start_time := dbms_utility.get_time ();
+  
+  insert into bricks
+    select level, 'red', 'cube' from dual
+    connect by level <= insert_count;
+  
+  dbms_output.put_line ( 'Multi-row duration = ' || ( dbms_utility.get_time () - start_time) );
+  
+  rollback;
+end;
+/
 
-SELECT COUNT (DISTINCT coulour) number_of_different_colours
-FROM bricks;
+-- Para preservar la columna que uno inserta: --
+insert into toys ( toy_id, toy_name, colour ) 
+  values ( 6, 'Green Rabbit', 'green' );
+  
+commit;
 
---Grouping aggregates:  --
-
---Nos permite encontrar la cantiddad de veces que se repite un color en conjunto a su nombre--
-select coulour, count (*) 
-from   bricks
-group  by coulour;
-
---Mientras que, en esta forma solo muestra los numeros--
-select count (*) 
-from   bricks
-group  by coulour;
-
---Con este query, podemos organizar cuantas veces repite el peso una figura --
---ej: hay dos cubos de peso 1 -- 
-select shape, weight, count (*) 
-from   bricks
-group  by shape, weight;
-
-
---Filtering Aggregates: --
-
---Para saber la cantidad de colores por grupo que tiene el peso mayor a uno --
-select coulour, count (*) 
-from   bricks
-where  weight > 1
-group  by coulour;
-
+select *
+from   toys
+where  toy_id = 6;
 
 
 
