@@ -1,0 +1,72 @@
+--Para crear la tabla que nos va a ayudar a desarrollar el ejercicio--
+
+create TABLE bricks(
+	coulour varchar2 (10),
+    shape varchar2 (10),
+  	weight integer
+);
+
+INSERT INTO bricks VALUES ('red', 'cube', 1);
+INSERT INTO bricks VALUES ('red', 'pyramid', 2);
+INSERT INTO bricks VALUES ('red', 'cuboid', 1);
+
+INSERT INTO bricks VALUES ('blue', 'cube', 1);
+INSERT INTO bricks VALUES ('blue', 'pyramid', 2);
+
+INSERT INTO bricks VALUES ('green', 'cube', 3);
+
+--Para mirar la tabla: --
+
+SELECT * FROM bricks
+
+--Mostramos el numero de filas que hay--
+
+SELECT COUNT (*) FROM bricks:
+
+--Para seguir los query: --
+
+SELECT sum(weight), min(weight), max(weight),
+	Avg(weight), median(weight),
+    variance(weight)
+FROM bricks;
+
+--Para saber el numero de colores que hay en la tabla --
+
+SELECT COUNT (DISTINCT coulour) number_of_different_colours
+FROM bricks;
+
+--Grouping aggregates:  --
+
+--Nos permite encontrar la cantiddad de veces que se repite un color en conjunto a su nombre--
+select coulour, count (*) 
+from   bricks
+group  by coulour;
+
+--Mientras que, en esta forma solo muestra los numeros--
+select count (*) 
+from   bricks
+group  by coulour;
+
+--Con este query, podemos organizar cuantas veces repite el peso una figura --
+--ej: hay dos cubos de peso 1 -- 
+select shape, weight, count (*) 
+from   bricks
+group  by shape, weight;
+
+
+--Filtering Aggregates: --
+
+--Para saber la cantidad de colores por grupo que tiene el peso mayor a uno --
+select coulour, count (*) 
+from   bricks
+where  weight > 1
+group  by coulour;
+
+
+
+
+
+
+
+
+
