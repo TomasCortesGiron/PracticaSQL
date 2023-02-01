@@ -1,0 +1,81 @@
+--Para crear la tabla que nos va a ayudar a desarrollar el ejercicio--
+
+create table toys (
+  toy_id   integer,
+  toy_name varchar2(100),
+  colour   varchar2(10)
+);
+
+create table bricks (
+  brick_id integer,
+  colour   varchar2(10),
+  shape    varchar2(10)
+);
+
+--Para insertar una columna simple: --
+insert into toys values ( 1, 'Miss Snuggles', 'pink' );
+
+select * from toys;
+
+--Para no colocar todos los valores de las columnas --
+insert into toys ( toy_id, toy_name ) values ( 2, 'Baby Turtle' );
+
+select * from toys;
+
+--En el siguiente ejemplo se ingresan los ID de toys a la tabla bricks: --
+select * from toys;
+
+insert into bricks ( brick_id )
+  select toy_id
+  from   toys;
+
+select * from bricks;
+
+-- For example, the following compares the performance of single-row vs multi-row inserts. Both add 50,000 rows.--
+-- Single-row adds one row 50,000 times. Multi-row adds 50,000 rows in one go. The multi-row version will be 10x --
+--to 100x faster! --
+
+declare
+  start_time   pls_integer;
+  insert_count pls_integer := 50000;
+begin
+  start_time := dbms_utility.get_time ();
+  
+  for i in 1 .. insert_count loop
+    insert into bricks 
+    values ( i, 'red', 'cube' );
+  end loop;
+  
+  dbms_output.put_line ( 'Single-row duration = ' || ( dbms_utility.get_time () - start_time) );
+  
+  rollback;
+  
+  start_time := dbms_utility.get_time ();
+  
+  insert into bricks
+    select level, 'red', 'cube' from dual
+    connect by level <= insert_count;
+  
+  dbms_output.put_line ( 'Multi-row duration = ' || ( dbms_utility.get_time () - start_time) );
+  
+  rollback;
+end;
+/
+
+-- Para preservar la columna que uno inserta: --
+insert into toys ( toy_id, toy_name, colour ) 
+  values ( 6, 'Green Rabbit', 'green' );
+  
+commit;
+
+select *
+from   toys
+where  toy_id = 6;
+
+
+
+
+
+
+
+
