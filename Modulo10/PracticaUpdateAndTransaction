@@ -1,81 +1,119 @@
 --Para crear la tabla que nos va a ayudar a desarrollar el ejercicio--
-
-create table toys (
-  toy_id   integer,
-  toy_name varchar2(100),
-  colour   varchar2(10)
-);
-
+--This is the prerequsite: --
 create table bricks (
-  brick_id integer,
-  colour   varchar2(10),
-  shape    varchar2(10)
+  colour      varchar2(10),
+  shape       varchar2(10),
+  quantity    integer,
+  unit_weight integer
 );
 
---Para insertar una columna simple: --
-insert into toys values ( 1, 'Miss Snuggles', 'pink' );
+insert into bricks values ( 'red', 'cylinder', 1, 13 );
+insert into bricks values ( 'blue', 'cube', 51, 8 );
+insert into bricks values ( 'green', 'cube', 600, 8 );
 
-select * from toys;
+commit;
 
---Para no colocar todos los valores de las columnas --
-insert into toys ( toy_id, toy_name ) values ( 2, 'Baby Turtle' );
+--Form that we can see the query:  --
+select * from bricks;
 
-select * from toys;
 
---En el siguiente ejemplo se ingresan los ID de toys a la tabla bricks: --
-select * from toys;
 
-insert into bricks ( brick_id )
-  select toy_id
-  from   toys;
+--With the next query, we can update all de quantity values with se number 60:  --
+update bricks
+set    quantity = 60;
 
 select * from bricks;
 
--- For example, the following compares the performance of single-row vs multi-row inserts. Both add 50,000 rows.--
--- Single-row adds one row 50,000 times. Multi-row adds 50,000 rows in one go. The multi-row version will be 10x --
---to 100x faster! --
+-- This update changes the quantity to 1422 for a row with the colour is red --
+update bricks
+set    quantity = 1422
+where  colour = 'red';
 
-declare
-  start_time   pls_integer;
-  insert_count pls_integer := 50000;
-begin
-  start_time := dbms_utility.get_time ();
-  
-  for i in 1 .. insert_count loop
-    insert into bricks 
-    values ( i, 'red', 'cube' );
-  end loop;
-  
-  dbms_output.put_line ( 'Single-row duration = ' || ( dbms_utility.get_time () - start_time) );
-  
-  rollback;
-  
-  start_time := dbms_utility.get_time ();
-  
-  insert into bricks
-    select level, 'red', 'cube' from dual
-    connect by level <= insert_count;
-  
-  dbms_output.put_line ( 'Multi-row duration = ' || ( dbms_utility.get_time () - start_time) );
-  
-  rollback;
-end;
-/
+select * from bricks;
 
--- Para preservar la columna que uno inserta: --
-insert into toys ( toy_id, toy_name, colour ) 
-  values ( 6, 'Green Rabbit', 'green' );
+--Transaction example:    --
+--For example, say you paint ten of the green cubes blue. So you need to increase the quantity of blue cubes by 10. --
+--And decrease the green bricks by the same amount. If one update completes but not the other the total quantity will be out by 10. --
+--This is can happen if you place a commit between the updates, as in this code: --
+update bricks
+set    quantity = quantity - 10
+where  colour = 'green'
+and    shape = 'cube';
+
+commit;
+  
+update bricks
+set    quantity = quantity + 10
+where  colour = 'blue'
+and    shape = 'cube';
   
 commit;
 
+select * from bricks;
+
+--Code for the autonomous transaction
+update bricks
+set    quantity = 60;
+
+declare
+  pragma autonomous_transaction;
+begin
+  update bricks
+  set    unit_weight = 55;
+  commit;
+end;
+/
+
+select * from bricks;
+
+rollback;
+
+--Lost Updates:   --
+-- Example: say currently there are 60 red cylinders in stock, with a unit weight of 13. Run this update to set these values:--
+update bricks
+set    quantity = 60,
+       unit_weight = 13
+where  colour = 'red'
+and    shape  = 'cylinder';
+
+--You have two people managing brick stock. One handles quantities, the other weights. They both load the current 
+--details for red cylinders to the edit form using this query:
 select *
-from   toys
-where  toy_id = 6;
+from   bricks
+where  colour = 'red'
+and    shape  = 'cylinder';
 
+--At this point they both see a quantity of 60 and weight of 13.
 
+--Then one person sets the weight to 8. And the other the quantity to 1,001. But they leave the value for the other attribute the same. They then both save their changes. The application updates both columns each time.
 
+--For each person, the update runs with the original value for the unchanged column. So the update to change the weight runs with these values:
 
+update bricks
+set    quantity = 60,  -- original quantity
+       unit_weight = 8 -- new weight 
+where  colour = 'red'
+and    shape  = 'cylinder';
 
+select * 
+from   bricks
+where  colour = 'red'
+and    shape  = 'cylinder';
+
+--And the quantity change runs with these values:
+
+update bricks
+set    quantity = 1001, -- new quantity
+       unit_weight = 13 -- original weight
+where  colour = 'red'
+and    shape  = 'cylinder';
+
+select * 
+from   bricks
+where  colour = 'red'
+and    shape  = 'cylinder';
+
+--As you can see, the second update sets the unit_weight from the new value of 8 back to the original, 13. So the update setting the weight to 8 is lost
 
 
 
