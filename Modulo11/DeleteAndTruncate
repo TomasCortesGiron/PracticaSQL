@@ -37,7 +37,7 @@ rollback;
 
 select * from toys;
 
--- SOFT DELETES --
+--            SOFT DELETES        --
 --In the next case, we go to create a column with values for a Soft delete
 alter table toys add is_deleted varchar2(1) default 'N';
 
@@ -72,5 +72,34 @@ where is_deleted = 'N';
 --   -> Virtual Private Database (VPD)
 --   -> In-Database Archiving.
 
+--   ->Using views:
+create or replace view active_toys as
+  select * from toys
+  where is_deleted = 'N';
+
+select * from active_toys;
+
+--   ->Using In-Database archiving:
+-- Do this with the following command:  --
+alter table toys row archival;
+
+--You then "delete" rows by setting ora_archive_state to any value other than zero. For example:
+update toys 
+set    ora_archive_state = '1'
+where  toy_name = 'Baby Turtle';
+
+select * from toys;
+
+-- You control which rows are visible in the session. If you set the row archival visibility to all, you see everything:
+alter session set row archival visibility = all;
+
+select * from toys;
+
+-- To auto-filter out the deleted rows, set the visibility to active:
+alter session set row archival visibility = active;
+
+select * from toys;
+
+--End
 
 
