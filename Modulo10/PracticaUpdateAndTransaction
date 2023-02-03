@@ -115,5 +115,37 @@ and    shape  = 'cylinder';
 
 --As you can see, the second update sets the unit_weight from the new value of 8 back to the original, 13. So the update setting the weight to 8 is lost
 
+--Optimist Locking:  --
+--For example, to avoid the lost update described in the previous module, you could change the updates to: --
+
+update bricks
+set    quantity = 1001,
+       unit_weight = 13
+where  colour = 'red'
+and    shape  = 'cylinder'
+and    quantity = 60    -- original quantity
+and    unit_weight = 13 -- original weight 
+;
+
+select * 
+from   bricks
+where  colour = 'red'
+and    shape  = 'cylinder';
+
+--And:
+
+update bricks
+set    quantity = 60,
+       unit_weight = 8
+where  colour = 'red'
+and    shape  = 'cylinder'
+and    quantity = 60    -- original quantity
+and    unit_weight = 13 -- original weight
+;
+
+select * 
+from   bricks
+where  colour = 'red'
+and    shape  = 'cylinder';
 
 
