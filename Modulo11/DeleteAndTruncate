@@ -1,151 +1,41 @@
 --Para crear la tabla que nos va a ayudar a desarrollar el ejercicio--
 --This is the prerequsite: --
-create table bricks (
-  colour      varchar2(10),
-  shape       varchar2(10),
-  quantity    integer,
-  unit_weight integer
+create table toys (
+  toy_name varchar2(30),
+  price    number(4, 2)
 );
 
-insert into bricks values ( 'red', 'cylinder', 1, 13 );
-insert into bricks values ( 'blue', 'cube', 51, 8 );
-insert into bricks values ( 'green', 'cube', 600, 8 );
+insert into toys values ('Baby Turtle', 0.01);
+insert into toys values ('Miss Snuggles', 0.51);
+insert into toys values ('Cuteasaurus', 10.01);
+insert into toys values ('Sir Stripypants', 14.03);
+insert into toys values ('Purple Ninja', 14.22);
 
 commit;
 
---Form that we can see the query:  --
-select * from bricks;
+--In this case, we erase all the information in the table:  --
+delete from toys;
 
+--Use a where clause for delete rows:  --
+delete toys where price < 1;
 
-
---With the next query, we can update all de quantity values with se number 60:  --
-update bricks
-set    quantity = 60;
-
-select * from bricks;
-
--- This update changes the quantity to 1422 for a row with the colour is red --
-update bricks
-set    quantity = 1422
-where  colour = 'red';
-
-select * from bricks;
-
---Transaction example:    --
---For example, say you paint ten of the green cubes blue. So you need to increase the quantity of blue cubes by 10. --
---And decrease the green bricks by the same amount. If one update completes but not the other the total quantity will be out by 10. --
---This is can happen if you place a commit between the updates, as in this code: --
-update bricks
-set    quantity = quantity - 10
-where  colour = 'green'
-and    shape = 'cube';
-
-commit;
-  
-update bricks
-set    quantity = quantity + 10
-where  colour = 'blue'
-and    shape = 'cube';
-  
-commit;
-
-select * from bricks;
-
---Code for the autonomous transaction
-update bricks
-set    quantity = 60;
-
-declare
-  pragma autonomous_transaction;
-begin
-  update bricks
-  set    unit_weight = 55;
-  commit;
-end;
-/
-
-select * from bricks;
+select * from toys;
 
 rollback;
 
---Lost Updates:   --
--- Example: say currently there are 60 red cylinders in stock, with a unit weight of 13. Run this update to set these values:--
-update bricks
-set    quantity = 60,
-       unit_weight = 13
-where  colour = 'red'
-and    shape  = 'cylinder';
+select * from toys;
 
---You have two people managing brick stock. One handles quantities, the other weights. They both load the current 
---details for red cylinders to the edit form using this query:
-select *
-from   bricks
-where  colour = 'red'
-and    shape  = 'cylinder';
+-- TRUNCATE: --
+--With Truncate, we can remove all the rows --
+select * from toys;
 
---At this point they both see a quantity of 60 and weight of 13.
+truncate table toys;
 
---Then one person sets the weight to 8. And the other the quantity to 1,001. But they leave the value for the other attribute the same. They then both save their changes. The application updates both columns each time.
+select * from toys;
 
---For each person, the update runs with the original value for the unchanged column. So the update to change the weight runs with these values:
+rollback;
 
-update bricks
-set    quantity = 60,  -- original quantity
-       unit_weight = 8 -- new weight 
-where  colour = 'red'
-and    shape  = 'cylinder';
+select * from toys;
 
-select * 
-from   bricks
-where  colour = 'red'
-and    shape  = 'cylinder';
-
---And the quantity change runs with these values:
-
-update bricks
-set    quantity = 1001, -- new quantity
-       unit_weight = 13 -- original weight
-where  colour = 'red'
-and    shape  = 'cylinder';
-
-select * 
-from   bricks
-where  colour = 'red'
-and    shape  = 'cylinder';
-
---As you can see, the second update sets the unit_weight from the new value of 8 back to the original, 13. So the update setting the weight to 8 is lost
-
---Optimist Locking:  --
---For example, to avoid the lost update described in the previous module, you could change the updates to: --
-
-update bricks
-set    quantity = 1001,
-       unit_weight = 13
-where  colour = 'red'
-and    shape  = 'cylinder'
-and    quantity = 60    -- original quantity
-and    unit_weight = 13 -- original weight 
-;
-
-select * 
-from   bricks
-where  colour = 'red'
-and    shape  = 'cylinder';
-
---And:
-
-update bricks
-set    quantity = 60,
-       unit_weight = 8
-where  colour = 'red'
-and    shape  = 'cylinder'
-and    quantity = 60    -- original quantity
-and    unit_weight = 13 -- original weight
-;
-
-select * 
-from   bricks
-where  colour = 'red'
-and    shape  = 'cylinder';
 
 
