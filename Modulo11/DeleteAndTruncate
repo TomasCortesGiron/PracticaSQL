@@ -37,5 +37,40 @@ rollback;
 
 select * from toys;
 
+-- SOFT DELETES --
+--In the next case, we go to create a column with values for a Soft delete
+alter table toys add is_deleted varchar2(1) default 'N';
+
+--We adding new rows, ensure this value is N (No) --
+delete toys;
+
+insert into toys values ('Baby Turtle', 0.01, 'N');
+insert into toys values ('Miss Snuggles', 0.51, 'N');
+insert into toys values ('Cuteasaurus', 10.01, 'N');
+insert into toys values ('Sir Stripypants', 14.03, 'N');
+insert into toys values ('Purple Ninja', 14.22, 'N');
+
+select * from toys;
+
+commit;
+
+--Now, to "delete" rows, you run an update. This sets the delete flag to Yes.
+--(We are changed the "is_deleted" value in Cuteasaurus  N->Y )
+update toys
+set    is_deleted = 'Y'
+where  toy_name = 'Cuteasaurus';
+
+select * from toys;
+
+--But now you need to filter out the "deleted" values in most queries. 
+--This makes your code more complicated. To get only active rows, you need to add a where clause to all these queries. For example:
+select * from toys
+where is_deleted = 'N';
+
+--Luckily Oracle Database offers many ways to simplify this, including:
+--   -> Using views
+--   -> Virtual Private Database (VPD)
+--   -> In-Database Archiving.
+
 
 
